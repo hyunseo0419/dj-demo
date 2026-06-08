@@ -136,7 +136,11 @@ export default function App() {
     setProgress({ done: 0, total: sectionsInput.length });
     try {
       const blob = await generateDocx(sectionsInput, setProgress);
-      downloadBlob(blob, "report.docx");
+      const d = new Date();
+      const yy = String(d.getFullYear()).slice(2);
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      downloadBlob(blob, `${yy}_${mm}${dd}.docx`);
     } catch (e) {
       alert((e as Error).message);
     } finally {
