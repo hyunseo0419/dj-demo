@@ -2,11 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Uploader } from "./components/Uploader";
 import { Gallery } from "./components/Gallery";
 import { RemarkModal } from "./components/RemarkModal";
-import { TopBar } from "./components/TopBar";
+import { TopBar, View } from "./components/TopBar";
 import { Manual } from "./components/Manual";
+import { HeaderForm } from "./components/HeaderForm";
 import { useI18n } from "./lib/i18n";
 import { LoadedImage, loadImage, revokeImage, bumpSeq } from "./lib/images";
 import { downloadBlob, generateDocx, GenerateProgress } from "./lib/docx";
+
+function todayStr(): string {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}/${mm}/${dd}`;
+}
 import {
   putImage,
   putMeta,
@@ -17,7 +25,10 @@ import {
 
 export default function App() {
   const { t } = useI18n();
-  const [view, setView] = useState<"app" | "manual">("app");
+  const [view, setView] = useState<View>("app");
+  const [header, setHeader] = useState<Record<string, string>>(() => ({
+    DATE: todayStr(),
+  }));
   const [images, setImages] = useState<LoadedImage[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // id -> 설명 텍스트(셀에 기재)
@@ -35,6 +46,7 @@ export default function App() {
       try {
         const [recs, meta] = await Promise.all([getAllImages(), getMeta()]);
         if (!alive) return;
+        if (meta?.header && Object.keys(meta.header).length) setHeader(meta.header);
         if (recs.length) {
           const byId = new Map(recs.map((r) => [r.id, r]));
           const order = meta?.order ?? recs.map((r) => r.id);
@@ -102,9 +114,10 @@ export default function App() {
       order,
       selected: [...selected],
       notes: [...notes.entries()],
+      header,
       seq,
     }).catch(() => {});
-  }, [images, selected, notes]);
+  }, [images, selected, notes, header]);
 
   // 모달 저장: 선택에 추가 + 설명 저장
   const saveFromModal = useCallback((id: string, text: string) => {
@@ -135,7 +148,7 @@ export default function App() {
     if (sectionsInput.length === 0) return;
     setProgress({ done: 0, total: sectionsInput.length });
     try {
-      const blob = await generateDocx(sectionsInput, setProgress);
+      const blob = await generateDocx(sectionsInput, header, setProgress);
       const d = new Date();
       const yy = String(d.getFullYear()).slice(2);
       const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -153,6 +166,7 @@ export default function App() {
     setImages([]);
     setSelected(new Set());
     setNotes(new Map());
+    setHeader({ DATE: todayStr() });
     setFocus(0);
     setModalIndex(null);
     clearAll().catch(() => {});
@@ -166,6 +180,13 @@ export default function App() {
 
       {view === "manual" ? (
         <Manual />
+      ) : view === "header" ? (
+        <HeaderForm
+          values={header}
+          onChange={(key, value) =>
+            setHeader((prev) => ({ ...prev, [key]: value }))
+          }
+        />
       ) : (
         <>
           <p className="hint">{t.hint}</p>

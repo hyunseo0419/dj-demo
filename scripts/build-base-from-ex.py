@@ -9,14 +9,90 @@ ex.docx(실제 양식)에서 완성본용 base.docx + section-unit.xml 을 추�
 """
 import re, os, sys, zipfile, shutil, tempfile
 
+from docx import Document
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "ex.docx")
 OUT_DIR = os.path.join(ROOT, "public/template")
 IMAGE_REL = 'relationships/image'
 MARKER = "<!--GEN_SECTIONS-->"
 
+# 상단 헤더 표: 라벨 -> 플레이스홀더 키 (값 셀을 {{KEY}}로 치환)
+HEADER_LABELS = {
+    "Date:": "DATE",
+    "Ship's Name": "SHIP_NAME",
+    "IMO Number": "IMO",
+    "Flag": "FLAG",
+    "Keel Lay": "KEEL_LAY",
+    "Delivery": "DELIVERY",
+    "Gross Tonnage": "GROSS_TONNAGE",
+    "Deadweight": "DEADWEIGHT",
+    "Owner": "OWNER",
+    "Manning Company": "MANNING_COMPANY",
+    "Crew nationality": "CREW_NATIONALITY",
+    "Number of Crew": "NUMBER_OF_CREW",
+    "Date of Inspection": "DATE_OF_INSPECTION",
+    "Port of Inspection": "PORT_OF_INSPECTION",
+    "Inspector": "INSPECTOR",
+    "Due date to rectify": "DUE_DATE",
+    "Date of Rectified": "DATE_OF_RECTIFIED",
+    "Master": "MASTER",
+    "Chief officer": "CHIEF_OFFICER",
+    "Chief engineer": "CHIEF_ENGINEER",
+}
+
+
+def _norm(s):
+    return " ".join(s.split())
+
+
+def _distinct(row):
+    seen, out = [], []
+    for c in row.cells:
+        if c._tc not in seen:
+            seen.append(c._tc)
+            out.append(c)
+    return out
+
+
+def _set_ph(cell, ph):
+    """값 셀 내용을 단일 런 {{KEY}}로 교체(첫 런 서식 유지)."""
+    p = cell.paragraphs[0]
+    runs = p.runs
+    if runs:
+        runs[0].text = ph
+        for r in runs[1:]:
+            r._element.getparent().remove(r._element)
+    else:
+        p.add_run(ph)
+    for extra in cell.paragraphs[1:]:
+        extra._element.getparent().remove(extra._element)
+
+
+def parameterize_header(src_path):
+    """헤더 표 값 셀을 {{KEY}}로 치환한 임시 docx 경로 반환."""
+    doc = Document(src_path)
+    ht = next(
+        t for t in doc.tables
+        if any("Ship's Name" in c.text for r in t.rows for c in r.cells)
+    )
+    for row in ht.rows:
+        cells = _distinct(row)
+        i = 0
+        while i < len(cells) - 1:
+            key = HEADER_LABELS.get(_norm(cells[i].text))
+            if key:
+                _set_ph(cells[i + 1], "{{%s}}" % key)
+                i += 2
+            else:
+                i += 1
+    out = os.path.join(tempfile.mkdtemp(), "param.docx")
+    doc.save(out)
+    return out
+
+
 work = tempfile.mkdtemp()
-with zipfile.ZipFile(SRC) as z:
+with zipfile.ZipFile(parameterize_header(SRC)) as z:
     z.extractall(work)
 doc_path = os.path.join(work, "word/document.xml")
 x = open(doc_path, encoding="utf-8").read()

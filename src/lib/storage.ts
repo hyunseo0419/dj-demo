@@ -20,6 +20,7 @@ export interface StoredMeta {
   order: string[]; // 표시 순서(이미지 id)
   selected: string[];
   notes: [string, string][]; // id -> 설명 텍스트
+  header?: Record<string, string>; // 상단 헤더 폼 값
   seq: number; // 다음 id 시퀀스
 }
 

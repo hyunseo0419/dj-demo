@@ -52,9 +52,36 @@ export interface SectionInput {
   text: string; // 번호 옆 관찰칸에 들어갈 텍스트
 }
 
+// 상단 헤더 표 플레이스홀더 키(폼 입력값으로 채워짐)
+export const HEADER_KEYS = [
+  "DATE",
+  "SHIP_NAME",
+  "IMO",
+  "FLAG",
+  "KEEL_LAY",
+  "DELIVERY",
+  "GROSS_TONNAGE",
+  "DEADWEIGHT",
+  "OWNER",
+  "MANNING_COMPANY",
+  "CREW_NATIONALITY",
+  "NUMBER_OF_CREW",
+  "DATE_OF_INSPECTION",
+  "PORT_OF_INSPECTION",
+  "INSPECTOR",
+  "DUE_DATE",
+  "DATE_OF_RECTIFIED",
+  "MASTER",
+  "CHIEF_OFFICER",
+  "CHIEF_ENGINEER",
+] as const;
+
+export type HeaderValues = Record<string, string>;
+
 /** 선택 이미지로 .docx Blob 생성. 이미지는 삽입 직전 최적화. */
 export async function generateDocx(
   sectionsInput: SectionInput[],
+  header: HeaderValues,
   onProgress?: (p: GenerateProgress) => void,
 ): Promise<Blob> {
   if (sectionsInput.length === 0) throw new Error("선택된 이미지가 없습니다.");
@@ -82,9 +109,11 @@ export async function generateDocx(
   const relsFile = zip.file("word/_rels/document.xml.rels");
   if (!docFile || !relsFile) throw new Error("base.docx 구조가 올바르지 않습니다.");
 
-  const doc = docFile
-    .asText()
-    .replace(MARKER, sections.join(SECTION_SEPARATOR));
+  let doc = docFile.asText().replace(MARKER, sections.join(SECTION_SEPARATOR));
+  // 상단 헤더 표 채우기(미입력 항목은 공란)
+  for (const key of HEADER_KEYS) {
+    doc = doc.replaceAll(`{{${key}}}`, escapeXml(header[key] ?? ""));
+  }
   const rels = relsFile
     .asText()
     .replace("</Relationships>", relEntries.join("") + "</Relationships>");
