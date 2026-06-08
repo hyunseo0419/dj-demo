@@ -9,6 +9,7 @@ export interface Dict {
   navManual: string;
   headerTitle: string;
   headerHint: string;
+  confirmInsufficient: string;
   hint: string;
   uploaderIdle: string;
   uploaderLoading: string;
@@ -51,6 +52,7 @@ const STRINGS: Record<Lang, Dict> = {
     navManual: "사용설명서",
     headerTitle: "상단 양식 정보",
     headerHint: "워드 상단 헤더에 들어갈 항목입니다. 비워두면 공란으로 출력됩니다. 날짜는 오늘 날짜가 기본값입니다.",
+    confirmInsufficient: "양식 정보 입력이 부족합니다. 그래도 다운로드하시겠습니까?",
     hint: "방향키로 이동 · Space 확대 + 설명 입력 · 선택 수만큼 섹션이 생성됩니다",
     uploaderIdle: "이미지를 드래그하거나 클릭해서 업로드 (JPEG/PNG)",
     uploaderLoading: "이미지 불러오는 중…",
@@ -105,6 +107,7 @@ const STRINGS: Record<Lang, Dict> = {
     navManual: "使用説明書",
     headerTitle: "上部ヘッダー情報",
     headerHint: "Word 上部のヘッダーに記載される項目です。空欄のままにすると空白で出力されます。日付は本日の日付が初期値です。",
+    confirmInsufficient: "ヘッダー情報の入力が不足しています。それでもダウンロードしますか？",
     hint: "矢印キーで移動 · Space で拡大 + 説明入力 · 選択した数だけセクションが生成されます",
     uploaderIdle: "画像をドラッグ、またはクリックしてアップロード (JPEG/PNG)",
     uploaderLoading: "画像を読み込み中…",

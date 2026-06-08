@@ -7,7 +7,12 @@ import { Manual } from "./components/Manual";
 import { HeaderForm } from "./components/HeaderForm";
 import { useI18n } from "./lib/i18n";
 import { LoadedImage, loadImage, revokeImage, bumpSeq } from "./lib/images";
-import { downloadBlob, generateDocx, GenerateProgress } from "./lib/docx";
+import {
+  downloadBlob,
+  generateDocx,
+  GenerateProgress,
+  HEADER_KEYS,
+} from "./lib/docx";
 
 function todayStr(): string {
   const d = new Date();
@@ -146,6 +151,13 @@ export default function App() {
 
   async function onGenerate() {
     if (sectionsInput.length === 0) return;
+    // 헤더 항목이 절반 미만 입력이면 확인(절반 이상이면 그냥 진행)
+    const filled = HEADER_KEYS.filter(
+      (k) => (header[k] ?? "").trim().length > 0,
+    ).length;
+    if (filled < HEADER_KEYS.length / 2 && !window.confirm(t.confirmInsufficient)) {
+      return;
+    }
     setProgress({ done: 0, total: sectionsInput.length });
     try {
       const blob = await generateDocx(sectionsInput, header, setProgress);
