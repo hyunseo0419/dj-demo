@@ -4,3 +4,5 @@ dist
 .DS_Store
 tsconfig.tsbuildinfo
 sample-output.docx
+ex.docx
+ex*.PNG

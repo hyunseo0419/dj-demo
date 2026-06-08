@@ -20,7 +20,7 @@ npm run build    # 타입체크 + 프로덕션 빌드
 
 ## 양식(워드) 에셋
 - 런타임 에셋: `public/template/base.docx`(레터헤드+헤더+sectPr), `public/template/section-unit.xml`(섹션 단위 템플릿)
-- 재생성: `python3 scripts/build-base-from-ex.py ex.docx` — 실제 양식(`ex.docx`)에서 base/unit을 추출
+- 재생성(선택): `python3 scripts/build-base-from-ex.py <양식.docx>` — 실제 양식 .docx에서 base/unit 재추출. (양식 원본은 용량 때문에 레포에 포함하지 않음 — 필요 시 별도 보관본 사용)
 - 생성 로직: `src/lib/docx.ts` — base에 섹션을 N개 복제 + 이미지 주입(PizZip)
 
 ## 구조
